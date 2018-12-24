@@ -7,24 +7,9 @@ import random
 from psycopg2.extras import Json
 from tqdm import tqdm
 from . import config
+from . import database
 
-def create_engine(settings):
-    assert isinstance(settings, dict)
-    url = "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}".format_map(
-        settings
-    )
-    application_name = settings["application_name"]
-
-    return sqlalchemy.create_engine(
-        url,
-        connect_args={"application_name": application_name},
-        poolclass=sqlalchemy.pool.NullPool,
-        use_native_uuid=False,
-        use_native_hstore=False,
-    )
-
-
-engine = create_engine(config.connection_settings())
+engine = database.create_engine()
 
 girls = [
     "SUNNY",

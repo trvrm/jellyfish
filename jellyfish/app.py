@@ -17,11 +17,11 @@ from sqlalchemy import func
 import warnings
 from . import config
 from . import dynamic_filtering
-
+from . import database
 
 # Database #####################################################################
 # async def pool_init(con):
-#     "copied from hyperion - what does this do?"
+
 #     await con.set_type_codec(
 #         "jsonb", schema="pg_catalog", encoder=dumps, decoder=json.loads, format="text"
 #     )
@@ -41,7 +41,7 @@ async def init_app():
 
     settings = config.connection_settings()
 
-    shared.clauseConstructor = dynamic_filtering.ClauseConstructor(getTables(settings))
+    shared.clauseConstructor = dynamic_filtering.ClauseConstructor(getTables())
 
     shared.pool = await asyncpgsa.create_pool(
         host=settings["host"],
@@ -58,27 +58,11 @@ async def query(sql):
         return await connection.fetch(sql)
 
 
-def create_engine(settings):
-    assert isinstance(settings, dict)
-    url = "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}".format_map(
-        settings
-    )
-    application_name = settings["application_name"]
-
-    return sqlalchemy.create_engine(
-        url,
-        connect_args={"application_name": application_name},
-        poolclass=sqlalchemy.pool.NullPool,
-        use_native_uuid=False,
-        use_native_hstore=False,
-    )
-
-
-def getTables(settings):
+def getTables():
     """
         Run this synchronously at app startup.
     """
-    engine = create_engine(settings)
+    engine = database.create_engine()
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=sqlalchemy.exc.SAWarning)
